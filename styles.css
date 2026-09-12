@@ -303,10 +303,13 @@ a { color: var(--sea-deep); }
 .mark {
   flex: 0 0 auto;
   width: auto;
-  height: 58px;
-  max-width: 110px;
+  height: auto;
+  max-height: 62px;
+  max-width: 122px;
   object-fit: contain;
 }
+
+.mark-tall { max-height: 104px; max-width: 96px; }
 
 .shot {
   margin: 0 0 20px;
@@ -399,9 +402,8 @@ a { color: var(--sea-deep); }
 .family img {
   display: block;
   width: 100%;
-  max-width: 540px;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
+  max-width: 440px;
+  height: auto;
   border-radius: 6px 6px 48px 6px;
   background: var(--sand);
 }
@@ -492,7 +494,8 @@ a { color: var(--sea-deep); }
   .timeline { padding-left: 22px; }
   .role::before { left: -28px; }
   .role-head { gap: 14px; }
-  .mark { height: 46px; max-width: 84px; }
+  .mark { max-height: 48px; max-width: 92px; }
+  .mark-tall { max-height: 80px; max-width: 74px; }
   .shot img { aspect-ratio: 16 / 9; border-radius: 4px 4px 32px 4px; }
 }
 
