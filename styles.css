@@ -35,6 +35,8 @@ h1, h2, h3 {
 }
 
 p { margin: 0 0 1rem; }
+img { max-width: 100%; }
+h1, h2, h3, p, li { overflow-wrap: break-word; }
 a { color: var(--link-dark); }
 :focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
 
@@ -48,7 +50,7 @@ a { color: var(--link-dark); }
 .topbar-in { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 62px; flex-wrap: wrap; }
 .brand { font-family: "Instrument Sans", "Inter", sans-serif; font-weight: 600; font-size: 17px; text-decoration: none; color: var(--navy); letter-spacing: -0.01em; }
 .nav { display: flex; align-items: center; gap: 22px; font-size: 14px; }
-.nav a { color: var(--blue); text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; }
+.nav a { color: var(--blue); text-decoration: none; padding: 10px 0; border-bottom: 2px solid transparent; }
 .nav a:hover { color: var(--navy); }
 .nav a[aria-current="page"] { color: var(--navy); border-bottom-color: var(--neon); }
 
@@ -154,7 +156,28 @@ a { color: var(--link-dark); }
   .hero-stats div:nth-child(1), .hero-stats div:nth-child(2) { border-bottom: 1px solid var(--navy-line); }
   .life { grid-template-columns: 1fr; gap: 28px; }
   .contact { padding: 30px 24px; border-radius: 14px; }
-  .nav { gap: 16px; font-size: 13px; }
+  .topbar-in { gap: 0; }
+  .brand { flex: 1 1 100%; padding-top: 10px; }
+  .nav {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 14px;
+    padding-bottom: 2px;
+  }
+  .nav a { padding: 8px 0; }
+  .btn { padding: 12px 20px; }
+  .card-body { padding: 14px 16px 18px; }
+}
+
+@media (max-width: 400px) {
+  .hero-top { padding: 18px; }
+  .hero-portrait { max-width: 150px; }
+  .hero-stats div { padding: 13px 14px; }
+  .hero-stats b { font-size: 21px; }
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip div { padding: 13px 14px; }
+  .nav { font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
