@@ -1,1 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A1B2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<meta name="robots" content="noindex">
+<title>Fitness log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0A1B2E;
+    --navy-2: #12335A;
+    --navy-line: #1C3E60;
+    --blue-soft: #7FBEEA;
+    --muted: #9DBEDB;
+    --white: #FFFFFF;
+    --neon: #00E5FF;
+    --danger: #FF8A8A;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  html { background: var(--navy); }
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+  :focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
 
+  .app { height: 100%; display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; padding: 0 16px; }
+
+  /* day header */
+  .day { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
+  .day h1 { font-family: "Instrument Sans", "Inter", sans-serif; font-weight: 600; font-size: 26px; letter-spacing: -0.02em; margin: 0; line-height: 1.1; }
+  .day p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+  .arrows { display: flex; gap: 6px; }
+  .arrow { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--navy-line); font-size: 22px; line-height: 1; color: var(--blue-soft); }
+  .arrow:disabled { opacity: 0.3; cursor: default; }
+
+  /* exercise rows */
+  .list { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; padding-bottom: 8px; }
+  .row { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; background: var(--navy-2); border-radius: 16px; overflow: hidden; }
+  .info { display: flex; flex-direction: column; justify-content: center; text-align: left; padding: 8px 16px; min-width: 0; }
+  .info .name { font-size: 15px; font-weight: 500; color: var(--blue-soft); }
+  .info .total { font-family: "Instrument Sans", "Inter", sans-serif; font-weight: 600; font-size: clamp(26px, 8vw, 36px); letter-spacing: -0.02em; line-height: 1.05; color: var(--white); transition: color 400ms ease; }
+  .info .total small { font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
+  .info .sets { font-size: 12px; color: var(--muted); }
+  .row.zero .total { color: #4F7090; }
+  .row.flash .total { color: var(--neon); transition: none; }
+
+  .add { width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--neon); color: var(--navy); }
+  .add:active { background: #7FF2FF; }
+  .add b { font-family: "Instrument Sans", "Inter", sans-serif; font-size: 24px; font-weight: 600; line-height: 1; }
+  .add span { font-size: 11px; font-weight: 500; margin-top: 3px; }
+  .viewing-past .add { background: var(--navy-line); color: var(--blue-soft); }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding-bottom: 8px; font-size: 13px; color: var(--muted); }
+  .undo { color: var(--neon); font-weight: 500; padding: 10px 0 10px 12px; }
+  .undo[hidden] { display: none; }
+
+  /* bottom sheet */
+  .scrim { position: fixed; inset: 0; background: rgba(4, 12, 22, 0.6); opacity: 0; pointer-events: none; transition: opacity 180ms ease; z-index: 10; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; max-height: 82%; display: flex; flex-direction: column; background: #0F2640; border-radius: 20px 20px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateY(105%); transition: transform 220ms ease; z-index: 11; }
+  .open .scrim { opacity: 1; pointer-events: auto; }
+  .open .sheet { transform: none; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .sheet h2 { font-family: "Instrument Sans", "Inter", sans-serif; font-weight: 600; font-size: 22px; margin: 0; letter-spacing: -0.02em; }
+  .close { color: var(--blue-soft); padding: 8px 0 8px 12px; font-size: 15px; }
+  .toggle { display: flex; gap: 4px; margin-top: 14px; padding: 4px; border-radius: 12px; background: var(--navy); border: 1px solid var(--navy-line); }
+  .toggle[hidden] { display: none; }
+  .toggle button { flex: 1; height: 40px; border-radius: 9px; font-size: 15px; font-weight: 500; color: var(--blue-soft); }
+  .toggle button[aria-pressed="true"] { background: var(--navy-2); color: var(--white); }
+  .field { display: flex; gap: 8px; margin-top: 14px; }
+  .field input { flex: 1; min-width: 0; height: 52px; border-radius: 12px; border: 1px solid var(--navy-line); background: var(--navy); color: var(--white); font: 600 22px "Instrument Sans", "Inter", sans-serif; padding: 0 14px; }
+  .field input::placeholder { color: #4F7090; font-weight: 500; font-size: 16px; }
+  .field button { height: 52px; padding: 0 18px; border-radius: 12px; font-weight: 600; font-size: 15px; background: var(--neon); color: var(--navy); white-space: nowrap; }
+  .field button.ghost { background: transparent; border: 1px solid var(--navy-line); color: var(--blue-soft); }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+  .sheet h3 { font-size: 13px; font-weight: 500; color: var(--muted); margin: 18px 0 6px; }
+  .log { list-style: none; margin: 0; padding: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; flex: 1; }
+  .log li { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--navy-line); padding: 4px 0; font-size: 15px; }
+  .log li time { color: var(--muted); font-size: 13px; margin-left: 8px; }
+  .log .del { color: var(--danger); font-size: 13px; padding: 10px 0 10px 12px; }
+  .log .empty { color: var(--muted); border: 0; padding: 8px 0; }
+
+  @media (max-height: 600px) {
+    .day { padding: 8px 0 6px; }
+    .day h1 { font-size: 22px; }
+    .list { gap: 6px; }
+    .info .total { font-size: 24px; }
+    .info .sets { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, .scrim, .info .total { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="day">
+    <div>
+      <h1 id="dayTitle">Today</h1>
+      <p id="daySub"></p>
+    </div>
+    <div class="arrows">
+      <button class="arrow" id="prev" aria-label="Previous day">&#8249;</button>
+      <button class="arrow" id="next" aria-label="Next day">&#8250;</button>
+    </div>
+  </header>
+
+  <main class="list" id="list"></main>
+
+  <footer class="foot">
+    <span id="status">Tap a name to log a different amount.</span>
+    <button class="undo" id="undo" hidden>Undo</button>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <h2 id="sheetTitle">Push-ups</h2>
+    <button class="close" id="close">Done</button>
+  </div>
+  <div class="toggle" id="unitToggle" hidden>
+    <button data-unit="mi" aria-pressed="false">Miles</button>
+    <button data-unit="min" aria-pressed="false">Minutes</button>
+  </div>
+  <div class="field">
+    <input id="amount" type="number" inputmode="numeric" min="0" step="any" placeholder="Amount">
+    <button id="addCustom">Add</button>
+  </div>
+  <div class="field">
+    <input id="quick" type="number" inputmode="numeric" min="0" step="any" placeholder="Quick-add amount">
+    <button class="ghost" id="saveQuick">Set button</button>
+  </div>
+  <p class="hint" id="quickHint"></p>
+  <h3 id="logTitle">Sets today</h3>
+  <ul class="log" id="log"></ul>
+</section>
+
+<script>
+(function () {
+  var EXERCISES = [
+    { id: "pushups",  name: "Push-ups",  unit: "reps",  quick: 50 },
+    { id: "walking",  name: "Walking",   unit: "mi",    quick: 1, alt: { unit: "min", quick: 30 }, legacy: "min" },
+    { id: "rope",     name: "Jump rope", unit: "skips", quick: 100 },
+    { id: "plank",    name: "Plank",     unit: "sec",   quick: 60 },
+    { id: "crunches", name: "Crunches",  unit: "reps",  quick: 25 }
+  ];
+  var KEY = "lg-fitness-v1";
+
+  // ---------- storage (kept on this phone, in this browser) ----------
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      var d = raw ? JSON.parse(raw) : null;
+      if (d && d.log) { d.quick = d.quick || {}; d.units = d.units || {}; return d; }
+    } catch (e) {}
+    return { quick: {}, units: {}, log: {} };
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); }
+    catch (e) { setStatus("Couldn't save on this device.", true); }
+  }
+  var data = load();
+
+  // ---------- dates ----------
+  function keyOf(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  var todayKey = keyOf(new Date());
+  var viewDate = new Date();
+  function viewKey() { return keyOf(viewDate); }
+  function isToday() { return viewKey() === keyOf(new Date()); }
+
+  // ---------- helpers ----------
+  function exById(id) { return EXERCISES.filter(function (e) { return e.id === id; })[0]; }
+  function unitFor(ex) { return (ex.alt && data.units[ex.id] === ex.alt.unit) ? ex.alt.unit : ex.unit; }
+  function entryUnit(ex, e) { return e.u || ex.legacy || ex.unit; }
+  function isDecimal(u) { return u === "mi"; }
+  function tidy(n) { return Math.round(n * 100) / 100; }
+  function parseAmt(val, u) { var n = isDecimal(u) ? tidy(parseFloat(val)) : parseInt(val, 10); return n > 0 ? n : 0; }
+  function quickFor(ex) {
+    var u = unitFor(ex);
+    var saved = data.quick[ex.id + ":" + u] || (u === (ex.legacy || ex.unit) ? data.quick[ex.id] : 0);
+    return saved || (u === ex.unit ? ex.quick : ex.alt.quick);
+  }
+  function entries(key) { return data.log[key] || []; }
+  function fmt(ex, n, u) {
+    u = u || unitFor(ex);
+    if (u === "mi") return { num: tidy(n).toLocaleString(undefined, { maximumFractionDigits: 2 }), unit: "mi" };
+    if (u === "sec" && n >= 60) {
+      var m = Math.floor(n / 60), s = n % 60;
+      return { num: m + ":" + String(s).padStart(2, "0"), unit: "min" };
+    }
+    return { num: n.toLocaleString(), unit: u };
+  }
+  var DEFAULT_STATUS = "Tap a name to log a different amount.";
+  var statusTimer;
+  function setStatus(msg, sticky) {
+    var el = document.getElementById("status");
+    el.textContent = msg;
+    clearTimeout(statusTimer);
+    if (!sticky) statusTimer = setTimeout(function () {
+      el.textContent = DEFAULT_STATUS;
+      document.getElementById("undo").hidden = true;
+    }, 6000);
+  }
+
+  // ---------- render ----------
+  var list = document.getElementById("list");
+  function render() {
+    var k = viewKey();
+    var day = entries(k);
+    var d = viewDate;
+    var yKey = keyOf(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 1));
+    var title = isToday() ? "Today" : (k === yKey ? "Yesterday" : d.toLocaleDateString(undefined, { weekday: "long" }));
+    document.getElementById("dayTitle").textContent = title;
+    document.getElementById("daySub").textContent =
+      d.toLocaleDateString(undefined, { month: "long", day: "numeric" }) +
+      (day.length ? ", " + day.length + (day.length === 1 ? " set logged" : " sets logged") : "");
+    document.getElementById("next").disabled = isToday();
+    document.getElementById("app").classList.toggle("viewing-past", !isToday());
+
+    list.innerHTML = "";
+    EXERCISES.forEach(function (ex) {
+      var u = unitFor(ex);
+      var all = day.filter(function (e) { return e.ex === ex.id; });
+      var mine = all.filter(function (e) { return entryUnit(ex, e) === u; });
+      var others = all.filter(function (e) { return entryUnit(ex, e) !== u; });
+      var total = tidy(mine.reduce(function (a, e) { return a + e.amt; }, 0));
+      var f = fmt(ex, total, u);
+      var setsText = mine.length ? mine.length + (mine.length === 1 ? " set" : " sets") : (others.length ? "" : "No sets yet");
+      if (others.length) {
+        var ou = entryUnit(ex, others[0]);
+        var of = fmt(ex, tidy(others.reduce(function (a, e) { return a + e.amt; }, 0)), ou);
+        setsText += (setsText ? ", plus " : "Plus ") + of.num + " " + of.unit;
+      }
+      var row = document.createElement("div");
+      row.className = "row" + (total ? "" : " zero");
+      row.dataset.id = ex.id;
+      row.innerHTML =
+        '<button class="info" data-open="' + ex.id + '" aria-label="' + ex.name + ' details">' +
+          '<span class="name">' + ex.name + '</span>' +
+          '<span class="total">' + f.num + '<small>' + f.unit + '</small></span>' +
+          '<span class="sets">' + setsText + '</span>' +
+        '</button>' +
+        '<button class="add" data-add="' + ex.id + '" aria-label="Add ' + quickFor(ex) + ' ' + u + ' of ' + ex.name + '">' +
+          '<b>+' + quickFor(ex) + '</b><span>' + u + '</span>' +
+        '</button>';
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- actions ----------
+  var lastAdd = null;
+  function addSet(id, amt) {
+    var ex = exById(id);
+    var k = viewKey();
+    var entry = { ex: id, amt: amt, u: unitFor(ex), t: Date.now() };
+    (data.log[k] = data.log[k] || []).push(entry);
+    save();
+    lastAdd = { k: k, t: entry.t };
+    render();
+    var row = list.querySelector('[data-id="' + id + '"]');
+    if (row) {
+      row.classList.add("flash");
+      setTimeout(function () { row.classList.remove("flash"); }, 60);
+    }
+    if (navigator.vibrate) navigator.vibrate(15);
+    var af = fmt(ex, amt, entry.u);
+    setStatus("Added " + af.num + " " + af.unit + " of " + ex.name.toLowerCase() + ".");
+    document.getElementById("undo").hidden = false;
+    if (sheetEx) renderLog();
+  }
+  function removeEntry(k, t) {
+    data.log[k] = entries(k).filter(function (e) { return e.t !== t; });
+    if (!data.log[k].length) delete data.log[k];
+    save();
+    render();
+  }
+
+  list.addEventListener("click", function (e) {
+    var add = e.target.closest("[data-add]");
+    if (add) { var ex = exById(add.dataset.add); addSet(ex.id, quickFor(ex)); return; }
+    var open = e.target.closest("[data-open]");
+    if (open) openSheet(open.dataset.open);
+  });
+
+  document.getElementById("undo").addEventListener("click", function () {
+    if (!lastAdd) return;
+    removeEntry(lastAdd.k, lastAdd.t);
+    lastAdd = null;
+    this.hidden = true;
+    setStatus("Last set removed.");
+    if (sheetEx) renderLog();
+  });
+
+  document.getElementById("prev").addEventListener("click", function () {
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate() - 1);
+    render();
+  });
+  document.getElementById("next").addEventListener("click", function () {
+    if (isToday()) return;
+    viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate() + 1);
+    render();
+  });
+
+  // ---------- detail sheet ----------
+  var sheetEx = null;
+  var body = document.body;
+  function openSheet(id) {
+    sheetEx = exById(id);
+    document.getElementById("sheetTitle").textContent = sheetEx.name;
+    document.getElementById("amount").value = "";
+    var u = unitFor(sheetEx);
+    var names = { mi: "miles", min: "minutes", sec: "seconds" };
+    document.getElementById("amount").placeholder = "Amount in " + (names[u] || u);
+    document.getElementById("quick").value = "";
+    ["amount", "quick"].forEach(function (id) {
+      document.getElementById(id).setAttribute("inputmode", isDecimal(u) ? "decimal" : "numeric");
+    });
+    var tg = document.getElementById("unitToggle");
+    tg.hidden = !sheetEx.alt;
+    Array.prototype.forEach.call(tg.querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.unit === u));
+    });
+    document.getElementById("quickHint").textContent =
+      "The big button adds " + quickFor(sheetEx) + " " + u + " per tap.";
+    renderLog();
+    body.classList.add("open");
+  }
+  function closeSheet() { body.classList.remove("open"); sheetEx = null; }
+  function renderLog() {
+    var k = viewKey();
+    var mine = entries(k).filter(function (e) { return e.ex === sheetEx.id; }).slice().reverse();
+    document.getElementById("logTitle").textContent = isToday() ? "Sets today" : "Sets that day";
+    var ul = document.getElementById("log");
+    ul.innerHTML = "";
+    if (!mine.length) { ul.innerHTML = '<li class="empty">No sets logged yet.</li>'; return; }
+    mine.forEach(function (e) {
+      var li = document.createElement("li");
+      var time = new Date(e.t).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+      var f = fmt(sheetEx, e.amt, entryUnit(sheetEx, e));
+      li.innerHTML = '<span>' + f.num + ' ' + f.unit + '<time>' + time + '</time></span>' +
+        '<button class="del" data-t="' + e.t + '">Delete</button>';
+      ul.appendChild(li);
+    });
+  }
+  document.getElementById("log").addEventListener("click", function (e) {
+    var del = e.target.closest(".del");
+    if (!del) return;
+    removeEntry(viewKey(), Number(del.dataset.t));
+    renderLog();
+  });
+  document.getElementById("addCustom").addEventListener("click", function () {
+    var input = document.getElementById("amount");
+    var n = parseAmt(input.value, unitFor(sheetEx));
+    if (!n) { input.focus(); return; }
+    addSet(sheetEx.id, n);
+    input.value = "";
+    input.blur();
+  });
+  document.getElementById("saveQuick").addEventListener("click", function () {
+    var input = document.getElementById("quick");
+    var u = unitFor(sheetEx);
+    var n = parseAmt(input.value, u);
+    if (!n) { input.focus(); return; }
+    data.quick[sheetEx.id + ":" + u] = n;
+    save();
+    render();
+    input.value = "";
+    input.blur();
+    document.getElementById("quickHint").textContent =
+      "The big button adds " + n + " " + u + " per tap.";
+  });
+  document.getElementById("unitToggle").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-unit]");
+    if (!b || !sheetEx) return;
+    data.units[sheetEx.id] = b.dataset.unit;
+    save();
+    render();
+    openSheet(sheetEx.id);
+  });
+  document.getElementById("close").addEventListener("click", closeSheet);
+  document.getElementById("scrim").addEventListener("click", closeSheet);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+
+  // roll over to the new day if the page is left open past midnight
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && keyOf(new Date()) !== todayKey) {
+      todayKey = keyOf(new Date());
+      viewDate = new Date();
+      render();
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
